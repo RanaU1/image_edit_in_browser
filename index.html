@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit images in your browser</title>
+
+    <!-- Cropper.js served from THIS repo (no CDN, no internet needed) -->
+    <link rel="stylesheet" href="vendor/cropper.min.css">
+    <script src="vendor/cropper.min.js"></script>
+
+    <style>
+        /* ===== Your theme: change these colors to restyle everything ===== */
+        :root {
+            --sky: #7cc4f0;
+            /* page background */
+            --sky-deep: #2b8fd6;
+            /* header + accents */
+            --sky-dark: #14659e;
+            /* text on white buttons, hover */
+            --white: #ffffff;
+            --ink: #0f2a3d;
+            /* main text */
+            --ink-soft: #3f6079;
+            /* secondary text */
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(180deg, var(--sky) 0%, #b9e1f8 100%) fixed;
+            color: var(--ink);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ----- Top bar with your logo ----- */
+        .topbar {
+            background: var(--sky-deep);
+        }
+
+        .topbar-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+        }
+
+        .logo {
+            height: 44px;
+            width: auto;
+            max-width: 160px;
+            border-radius: 8px;
+            background: var(--white);
+            padding: 4px;
+        }
+
+        .brand {
+            color: var(--white);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 28px 16px 64px;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin: 0 0 4px;
+        }
+
+        .sub {
+            color: var(--ink-soft);
+            margin: 0 0 24px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.45);
+            border-radius: var(--radius);
+        }
+
+        /* ----- White buttons ----- */
+        button,
+        .file-btn {
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: var(--white);
+            color: var(--sky-dark);
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(20, 101, 158, 0.25);
+        }
+
+        button:hover:not(:disabled),
+        .file-btn:hover {
+            border-color: var(--sky-deep);
+            background: #f0f9ff;
+        }
+
+        button:focus-visible,
+        .file-btn:focus-within {
+            outline: 3px solid var(--sky-dark);
+            outline-offset: 2px;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .primary {
+            border-color: var(--sky-dark);
+        }
+
+        .file-btn {
+            display: inline-block;
+        }
+
+        .file-btn input {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+        }
+
+        .stage {
+            background: var(--white);
+            border-radius: var(--radius);
+            min-height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(20, 101, 158, 0.18);
+        }
+
+        .empty {
+            color: var(--ink-soft);
+            text-align: center;
+            padding: 48px 16px;
+        }
+
+        .canvas-wrap {
+            width: 100%;
+            max-height: 70vh;
+        }
+
+        .canvas-wrap img {
+            display: block;
+            max-width: 100%;
+        }
+
+        .status {
+            margin-top: 12px;
+            color: var(--ink);
+            font-size: 0.9rem;
+            min-height: 1.4em;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <!-- Put your logo file next to index.html and name it logo.png -->
+            <img class="logo" src="logo.png" alt="Logo" onerror="this.style.display='none'">
+            <p class="brand">Rana Universe Projects</p>
+        </div>
+    </header>
+
+    <main>
+        <h1>Edit images in Browser</h1>
+        <p class="sub">Your image never leaves your device. Pick a file, edit it, and download the result.</p>
+
+        <div class="toolbar">
+            <div class="group">
+                <label class="file-btn">
+                    Choose image
+                    <input type="file" id="file" accept="image/*">
+                </label>
+            </div>
+
+            <div class="group" id="tools" aria-label="Edit tools">
+                <button data-act="rotate-left" disabled>Rotate left</button>
+                <button data-act="rotate-right" disabled>Rotate right</button>
+                <button data-act="flip-h" disabled>Flip horizontal</button>
+                <button data-act="flip-v" disabled>Flip vertical</button>
+                <button data-act="zoom-in" disabled>Zoom in</button>
+                <button data-act="zoom-out" disabled>Zoom out</button>
+                <button data-act="reset" disabled>Reset</button>
+            </div>
+
+            <div class="group">
+                <button data-ratio="NaN" disabled>Free</button>
+                <button data-ratio="1" disabled>1:1</button>
+                <button data-ratio="1.7777777" disabled>16:9</button>
+                <button data-ratio="1.3333333" disabled>4:3</button>
+            </div>
+
+            <div class="group">
+                <button id="download" class="primary" disabled>Download</button>
+                <button id="upload" disabled title="Server upload isn't connected yet">Upload to server</button>
+            </div>
+        </div>
+
+        <div class="stage" id="stage">
+            <div class="empty" id="empty">No image yet. Choose one to start editing.</div>
+            <div class="canvas-wrap" id="wrap" hidden>
+                <img id="image" alt="Image being edited">
+            </div>
+        </div>
+        <div class="status" id="status" role="status"></div>
+    </main>
+
+    <script>
+        (function () {
+            var fileInput = document.getElementById('file');
+            var img = document.getElementById('image');
+            var wrap = document.getElementById('wrap');
+            var empty = document.getElementById('empty');
+            var statusEl = document.getElementById('status');
+            var controls = document.querySelectorAll('.toolbar button');
+            var cropper = null;
+            var fileName = 'edited-image';
+            var objectUrl = null;
+            var scaleX = 1, scaleY = 1;
+
+            function setStatus(msg) { statusEl.textContent = msg; }
+            function enable(on) {
+                controls.forEach(function (b) { b.disabled = !on; });
+            }
+
+            fileInput.addEventListener('change', function () {
+                var file = fileInput.files && fileInput.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    setStatus('That file is not an image. Choose a PNG, JPG, WebP or GIF.');
+                    return;
+                }
+                fileName = file.name.replace(/\.[^.]+$/, '') + '-edited';
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+                objectUrl = URL.createObjectURL(file);
+
+                if (cropper) { cropper.destroy(); cropper = null; }
+                scaleX = scaleY = 1;
+                img.src = objectUrl;
+                empty.hidden = true;
+                wrap.hidden = false;
+
+                img.onload = function () {
+                    cropper = new Cropper(img, {
+                        viewMode: 1,
+                        autoCropArea: 0.9,
+                        responsive: true
+                    });
+                    enable(true);
+                    setStatus('Drag to move the crop box. Use the buttons to rotate, flip or zoom.');
+                };
+            });
+
+            document.querySelector('.toolbar').addEventListener('click', function (e) {
+                var btn = e.target.closest('button');
+                if (!btn || !cropper) return;
+
+                if (btn.dataset.ratio !== undefined) {
+                    cropper.setAspectRatio(parseFloat(btn.dataset.ratio));
+                    return;
+                }
+                switch (btn.dataset.act) {
+                    case 'rotate-left': cropper.rotate(-90); break;
+                    case 'rotate-right': cropper.rotate(90); break;
+                    case 'flip-h': scaleX = -scaleX; cropper.scaleX(scaleX); break;
+                    case 'flip-v': scaleY = -scaleY; cropper.scaleY(scaleY); break;
+                    case 'zoom-in': cropper.zoom(0.1); break;
+                    case 'zoom-out': cropper.zoom(-0.1); break;
+                    case 'reset':
+                        cropper.reset(); scaleX = scaleY = 1; cropper.scale(1, 1);
+                        break;
+                }
+            });
+
+            document.getElementById('download').addEventListener('click', function () {
+                if (!cropper) return;
+                var canvas = cropper.getCroppedCanvas({
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high'
+                });
+                if (!canvas) { setStatus('Could not create the image. Try a smaller crop area.'); return; }
+                canvas.toBlob(function (blob) {
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName + '.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                    setStatus('Downloaded ' + a.download);
+                }, 'image/png');
+            });
+
+            // Placeholder for later: send the edited image to your Flask/FastAPI backend.
+            document.getElementById('upload').addEventListener('click', function () {
+                if (!cropper) return;
+                setStatus('Server upload is not connected yet.');
+                /*
+                cropper.getCroppedCanvas().toBlob(function (blob) {
+                  var form = new FormData();
+                  form.append('image', blob, fileName + '.png');
+                  fetch('https://your-server.example/upload', { method: 'POST', body: form })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) { setStatus('Uploaded.'); })
+                    .catch(function () { setStatus('Upload failed.'); });
+                }, 'image/png');
+                */
+            });
+        })();
+    </script>
+</body>
+
+</html>
